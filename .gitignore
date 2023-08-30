@@ -34,6 +34,9 @@ application.properties
 application.yml
 application.yaml
 
+# jks
+src/main/resources/www.zyuxr.top.jks
+
 # Spring Boot devtools
 /.idea
 .springBeans
