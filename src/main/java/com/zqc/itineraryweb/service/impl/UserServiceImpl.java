@@ -45,8 +45,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public int clearUserToken(String username, String token) {
-        return userMapper.clearUserToken(username, token);
+    public void clearUserToken(String username, String token) {
+        userMapper.clearUserToken(username, token);
     }
 
 }

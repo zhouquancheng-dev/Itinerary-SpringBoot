@@ -14,6 +14,6 @@ public interface UserService {
 
     void updateByTokenAndLastLoginAt(User user);
 
-    int clearUserToken(String username, String token);
+    void clearUserToken(String username, String token);
 
 }

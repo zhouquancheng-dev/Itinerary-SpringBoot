@@ -53,20 +53,19 @@ public class JwtUtils {
 
     public static boolean isJwtExpired(String jwtToken) {
         try {
-            Claims claims = Jwts.parserBuilder()
+            Jwts.parserBuilder()
                     .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
                     .build()
                     .parseClaimsJws(jwtToken)
                     .getBody();
-
-            Date expirationDate = claims.getExpiration();
-            Date currentTime = new Date();
-
-            return expirationDate.before(currentTime);
-        } catch (Exception e) {
-            logger.error("发生了错误: {}, 错误信息为: {}", e, e.getMessage());
+        } catch (ExpiredJwtException e) {
+            log.info("JWT过期");
+            return true;
+        } catch (JwtException e) {
+            logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
             return true;
         }
+        return false;
     }
 
 }

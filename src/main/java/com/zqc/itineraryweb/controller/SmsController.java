@@ -5,6 +5,8 @@ import com.zqc.itineraryweb.entity.Sms;
 import com.zqc.itineraryweb.entity.SmsDTO;
 import com.zqc.itineraryweb.service.SmsService;
 import com.zqc.itineraryweb.utils.JwtUtils;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +29,7 @@ public class SmsController {
     private static final Logger logger = LoggerFactory.getLogger(SmsController.class);
 
     // 5分钟 ms数
-    private static final long EXPIRATION_TIME = 5 * 60 * 1000L;
+    private static final long EXPIRATION_TIME = 60 * 1000L;
 
     private final SmsService smsService;
 
@@ -81,7 +83,7 @@ public class SmsController {
             value = "/check",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
-    public Result<SmsDTO> checkSmsData(
+    public Result<SmsDTO> validateSmsCode(
             @RequestParam("phone_number") String phoneNumber,
             @RequestParam("sms_code") String code,
             @RequestParam("biz_id") String bizId
@@ -101,23 +103,20 @@ public class SmsController {
             String jwt = querySmsData.getExpire();
             try {
                 JwtUtils.parseJwt(jwt);
-            } catch (Exception e) {
-                logger.error("发生了错误: {}, 错误信息为: {}", e, e.getMessage());
-                log.info("解析JWT时发生错误");
-
+            } catch (ExpiredJwtException e) {
                 return Result.error("验证码已过有效期");
+            } catch (JwtException e) {
+                logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+                return Result.error("JWT解析错误");
             }
 
-            if (!JwtUtils.isJwtExpired(jwt)) {
-                SmsDTO smsDTO = new SmsDTO();
-                smsDTO.setStatus(true);
-                smsDTO.setPhoneNumber(querySmsData.getPhoneNumber());
-                smsDTO.setBizId(querySmsData.getBizId());
+            SmsDTO smsDTO = new SmsDTO();
+            smsDTO.setStatus(true);
+            smsDTO.setPhoneNumber(querySmsData.getPhoneNumber());
+            smsDTO.setBizId(querySmsData.getBizId());
 
-                smsService.deleteByPhoneNumber(phoneNumber);
-
-                return Result.success(smsDTO);
-            }
+            smsService.deleteByPhoneNumber(phoneNumber);
+            return Result.success(smsDTO);
         }
         return Result.error("验证码错误");
     }

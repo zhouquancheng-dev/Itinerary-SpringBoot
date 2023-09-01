@@ -5,6 +5,8 @@ import com.zqc.itineraryweb.entity.User;
 import com.zqc.itineraryweb.service.UserService;
 import com.zqc.itineraryweb.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
@@ -32,7 +33,7 @@ public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     // 15天 ms数 15 * 24 * 60 * 60 * 1000L
-    private static final long EXPIRATION_TIME = 5 * 60 * 1000L;
+    private static final long EXPIRATION_TIME = 60 * 1000L;
 
     private final UserService userService;
 
@@ -45,34 +46,31 @@ public class UserController {
             @RequestParam("username") String username,
             @RequestParam("password") String password
     ) {
-        if (isValidUsername(username) && isValidPassword(password)) {
-            User loginUser = userService.login(username);
-            if (loginUser != null) {
-                PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        User loginUser = userService.login(username);
+        if (loginUser != null) {
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-                if (passwordEncoder.matches(password, loginUser.getPassword())) {
-                    UUID uuid = convertBytesToUUID(loginUser.getUserId());
-                    String timeFormat = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                    String jwtToken = loginUser.getToken();
+            if (passwordEncoder.matches(password, loginUser.getPassword())) {
+                UUID uuid = convertBytesToUUID(loginUser.getUserId());
+                String timeFormat = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                String jwtToken = loginUser.getToken();
 
-                    if (jwtToken == null || JwtUtils.isJwtExpired(jwtToken)) {
-                        Map<String, Object> claims = new HashMap<>();
-                        claims.put("userId", uuid);
-                        claims.put("username", loginUser.getUsername());
-                        claims.put("lastLoginAt", timeFormat);
+                if (jwtToken == null || JwtUtils.isJwtExpired(jwtToken)) {
+                    Map<String, Object> claims = new HashMap<>();
+                    claims.put("userId", uuid);
+                    claims.put("username", loginUser.getUsername());
+                    claims.put("lastLoginAt", timeFormat);
 
-                        jwtToken = JwtUtils.generateJwt(claims, EXPIRATION_TIME);
+                    jwtToken = JwtUtils.generateJwt(claims, EXPIRATION_TIME);
 
-                        loginUser.setToken(jwtToken);
-                        loginUser.setLastLoginAt(LocalDateTime.now());
-                        userService.updateByTokenAndLastLoginAt(loginUser);
-                    }
-                    return Result.success(jwtToken);
+                    loginUser.setToken(jwtToken);
+                    loginUser.setLastLoginAt(LocalDateTime.now());
+                    userService.updateByTokenAndLastLoginAt(loginUser);
                 }
+                return Result.success(jwtToken);
             }
-            return Result.error("登录失败，用户名或密码错误");
         }
-        return Result.error("登录失败，请检查输入");
+        return Result.error("登录失败，用户名或密码错误");
     }
 
     @PostMapping(value = "/register")
@@ -116,23 +114,28 @@ public class UserController {
             // 清除用户在服务器端的相关状态信息
             String jwtToken = request.getHeader("Authorization");
 
-            if (!StringUtils.hasLength(jwtToken)) {
-                return Result.error("退出登录失败，请检查请求头");
+            if (jwtToken.isEmpty()) {
+                return Result.error("登出失败，请求头token为空");
             }
 
-            Claims claims = JwtUtils.parseJwt(jwtToken);
-            String username = claims.get("username", String.class);
-            int updated = userService.clearUserToken(username, null);
+            try {
+                Claims claims = JwtUtils.parseJwt(jwtToken);
+                String username = claims.get("username", String.class);
+                userService.clearUserToken(username, null);
 
-            if (updated == 1) {
                 return Result.success();
+            } catch (ExpiredJwtException e) {
+                log.error("令牌已过有效期");
+                return Result.error("登出失败");
+            } catch (JwtException e) {
+                logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+                return Result.error("登出失败");
             }
+
         } catch (Exception e) {
             logger.error("发生了错误: {}, 错误信息为: {}", e, e.getMessage());
-            return Result.error("退出登录失败");
+            return Result.error("登出失败");
         }
-
-        return Result.error("退出登录失败");
     }
 
     private byte[] generateUUIDToBytes() {

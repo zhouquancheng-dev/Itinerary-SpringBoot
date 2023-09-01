@@ -27,5 +27,5 @@ public interface UserMapper {
     void updateByTokenAndLastLoginAt(User user);
 
     @Update("update tb_user_login set token = #{token} where username = #{username}")
-    int clearUserToken(String username, String token);
+    void clearUserToken(String username, String token);
 }
