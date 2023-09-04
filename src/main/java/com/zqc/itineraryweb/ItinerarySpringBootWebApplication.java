@@ -1,18 +1,22 @@
 package com.zqc.itineraryweb;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@Slf4j
+@EnableJpaRepositories(basePackages = "com.zqc.itineraryweb.dao")
 @EnableAspectJAutoProxy
 @SpringBootApplication
 public class ItinerarySpringBootWebApplication {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItinerarySpringBootWebApplication.class);
+
     public static void main(String[] args) {
         SpringApplication.run(ItinerarySpringBootWebApplication.class, args);
-        log.info("ItinerarySpringBootWebApplication 项目启动成功！");
+        LOGGER.info("ItinerarySpringBoot 应用启动成功！");
     }
 
 }

@@ -1,19 +1,15 @@
 package com.zqc.itineraryweb.service;
 
-import com.zqc.itineraryweb.entity.User;
+import com.zqc.itineraryweb.entity.Result;
 
 public interface UserService {
 
-    User login(String username);
+    Result<Object> userLogin(String username, String password);
 
-    void register(User user);
+    Result<Object> autoLogin(String token);
 
-    int getUserByToken(String username);
+    Result<Object> registerUser(String username, String password);
 
-    int getHasByUsername(String username);
-
-    void updateByTokenAndLastLoginAt(User user);
-
-    void clearUserToken(String username, String token);
+    Result<Object> logout(String token);
 
 }

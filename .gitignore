@@ -34,8 +34,11 @@ application.properties
 application.yml
 application.yaml
 
-# jks
-src/main/resources/www.zyuxr.top.jks
+# 忽略jks文件
+src/main/resources/keys/www.zyuxr.top.jks
+# 忽略RSA密钥文件
+/src/main/resources/keys/private_key.txt
+/src/main/resources/keys/public_key.txt
 
 # Spring Boot devtools
 /.idea

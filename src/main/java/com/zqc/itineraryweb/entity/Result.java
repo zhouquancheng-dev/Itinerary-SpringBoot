@@ -21,29 +21,35 @@ public class Result<T> {
     // 返回数据
     private T data;
 
+    public static final int SUCCESS_CODE = 200;
+    public static final int ERROR_CODE = 0;
+
     /**
      * 请求成功
+     *
      * @param data Object
      * @return data
      */
     public static <T> Result<T> success(T data) {
-        return new Result<>(200, "success", data);
+        return new Result<>(SUCCESS_CODE, "success", data);
     }
 
     /**
      * 请求成功
+     *
      * @return null data
      */
     public static <T> Result<T> success() {
-        return new Result<>(200, "success", null);
+        return new Result<>(SUCCESS_CODE, "success", null);
     }
 
     /**
      * 请求失败
+     *
      * @param msg 失败消息
      * @return null data
      */
     public static <T> Result<T> error(String msg) {
-        return new Result<>(0, msg, null);
+        return new Result<>(ERROR_CODE, msg, null);
     }
 }

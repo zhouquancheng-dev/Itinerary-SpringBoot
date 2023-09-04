@@ -50,14 +50,13 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- mysql mybatis连接 -->
-        <!-- https://mvnrepository.com/artifact/org.mybatis.spring.boot/mybatis-spring-boot-starter -->
+        <!-- SpringBoot Data JPA -->
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
         <dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>3.0.2</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-
+        
         <!-- mysql驱动 -->
         <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
         <dependency>
@@ -73,14 +72,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.28</version>
-        </dependency>
-
-        <!-- PageHelper分页查询插件 -->
-        <!-- https://mvnrepository.com/artifact/com.github.pagehelper/pagehelper-spring-boot-starter -->
-        <dependency>
-            <groupId>com.github.pagehelper</groupId>
-            <artifactId>pagehelper-spring-boot-starter</artifactId>
-            <version>1.4.7</version>
         </dependency>
 
         <!-- 解决 SpringBoot 在 3.1.3 版本中关联的 snakeyaml 依赖漏洞  使用最新yaml版本 -->

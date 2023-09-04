@@ -1,17 +1,14 @@
 package com.zqc.itineraryweb.service;
 
-import com.zqc.itineraryweb.entity.Sms;
+import com.zqc.itineraryweb.entity.Result;
+import com.zqc.itineraryweb.entity.SmsDTO;
+
+import java.time.LocalDateTime;
 
 public interface SmsService {
 
-    void insertSmsData(Sms sms);
+    Result<Object> saveSmsData(String phoneNumber, String code, String bizId, LocalDateTime sendTime);
 
-    Sms querySmsData(String phoneNumber, String bizId);
-
-    int querySmsByPhoneNumber(String phoneNumber);
-
-    void updateSmsData(Sms sms);
-
-    void deleteByPhoneNumber(String phoneNumber);
+    Result<SmsDTO> validateSmsCode(String phoneNumber, String code, String bizId);
 
 }

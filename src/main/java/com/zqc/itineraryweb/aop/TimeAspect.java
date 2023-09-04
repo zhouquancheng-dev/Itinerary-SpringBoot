@@ -1,6 +1,5 @@
 package com.zqc.itineraryweb.aop;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -8,26 +7,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-@Slf4j
-@Component
 @Aspect
+@Component
 public class TimeAspect {
 
-    private static final Logger logger = LoggerFactory.getLogger(TimeAspect.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TimeAspect.class);
 
     @Around("execution(* com.zqc.itineraryweb.service.*.*(..))")
     public Object recordTime(ProceedingJoinPoint joinPoint) {
-        long begin = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         Object result;
+
         try {
             result = joinPoint.proceed();
         } catch (Throwable e) {
-            logger.error("发生了错误: {}, 错误信息为: {}", e, e.getMessage());
-            throw new RuntimeException(e);
+            // 打印异常信息，然后继续执行方法
+            LOGGER.error("方法执行发生错误: {}", e.getMessage());
+            for (StackTraceElement stackTraceElement : e.getStackTrace()) {
+                LOGGER.error(stackTraceElement.toString());
+            }
+            // 设置result为null或者其他适当的默认值，以便方法继续执行
+            result = null;
+        } finally {
+            long endTime = System.currentTimeMillis();
+            long executionTime = endTime - startTime;
+            String methodName = joinPoint.getSignature().toShortString();
+            String className = joinPoint.getTarget().getClass().getName();
+
+            LOGGER.info("执行方法: {} 在类: {} 中，执行耗时: {}ms", methodName, className, executionTime);
         }
-        long end = System.currentTimeMillis();
-        log.info("在包路径为: {} 中的方法: [{}], 执行耗时: {}ms", joinPoint.getSignature(), joinPoint.getSignature().getName(), end - begin);
+
         return result;
     }
 }
-
