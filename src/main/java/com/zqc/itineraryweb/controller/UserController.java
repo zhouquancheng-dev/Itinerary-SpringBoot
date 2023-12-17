@@ -2,20 +2,11 @@ package com.zqc.itineraryweb.controller;
 
 import com.zqc.itineraryweb.entity.Result;
 import com.zqc.itineraryweb.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping(value = "/user")
 public class UserController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
 
@@ -26,69 +17,92 @@ public class UserController {
     /**
      * 登录
      *
-     * @param username 用户名
+     * @param username 用户名（国内合法11位手机号码）
      * @param password 密码
-     * @return Result<String>
+     * @return Result
      */
     @PostMapping(value = "/login")
-    public Result<Object> userLogin(
+    public Result<Object> login(
             @RequestParam("username") String username,
             @RequestParam("password") String password
     ) {
-        return userService.userLogin(username, password);
+        return userService.login(username, password);
     }
 
     /**
-     * 客户端根据请求头中token自动登录
+     * 注册用户
      *
-     * @param token jwt
-     * @return Result<String>
-     */
-    @PostMapping("/auto-login")
-    public Result<Object> autoLogin(@RequestHeader("Authorization") String token) {
-        return userService.autoLogin(token);
-    }
-
-    /**
-     * 用户注册
-     *
-     * @param username 用户名
+     * @param username 用户名（国内合法11位手机号码）
      * @param password 密码
-     * @return Result<String>
+     * @return Result
      */
     @PostMapping(value = "/register")
     public Result<Object> register(
             @RequestParam("username") String username,
-            @RequestParam("password") String password
+            @RequestParam("password") String password,
+            @RequestParam("confirm_password") String confirmPassword
     ) {
-        return userService.registerUser(username, password);
+        return userService.register(username, password, confirmPassword);
     }
 
     /**
-     * 登出
+     * 退出登录
      *
-     * @param request 请求头
-     * @return Result<String>
+     * @param token jwt
+     * @return Result
      */
     @PostMapping(value = "/logout")
-    public Result<Object> logout(HttpServletRequest request) {
-        try {
-            // 清除用户认证信息
-            SecurityContextHolder.clearContext();
+    public Result<Object> logout(@RequestHeader("token") String token) {
+        return userService.logout(token);
+    }
 
-            // 使会话失效
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                session.invalidate();
-            }
+    /**
+     * 客户端根据请求头中token验证自动登录
+     *
+     * @param token jwt
+     * @return Result
+     */
+    @PostMapping(value = "/auto-login")
+    public Result<Object> autoLogin(@RequestHeader("token") String token) {
+        return userService.autoLogin(token);
+    }
 
-            // 清除用户在服务器端的相关状态信息
-            String token = request.getHeader("Authorization");
+    /**
+     * 手机登录
+     *
+     * @param phoneNumber 国内合法11位手机号码
+     * @return Result
+     */
+    @PostMapping(value = "/phone/login-verify")
+    public Result<Object> phoneNumberLogin(@RequestParam("phone_number") String phoneNumber) {
+        return userService.phoneNumberLogin(phoneNumber);
+    }
 
-            return userService.logout(token);
-        } catch (Exception e) {
-            LOGGER.error("发生了错误: {}, 错误信息为: {}", e, e.getMessage());
-            return Result.error("登出失败");
-        }
+    /**
+     * 检查用户是否注册
+     *
+     * @param username 用户名（国内合法11位手机号码）
+     * @return Result
+     */
+    @PostMapping(value = "/check-registration")
+    public Result<Object> checkRegistration(@RequestParam("username") String username) {
+        return userService.checkRegistration(username);
+    }
+
+    /**
+     * 重设密码
+     *
+     * @param username 用户名（国内合法11位手机号码）
+     * @param newPassword 新密码
+     * @param confirmNewPassword 确认新密码
+     * @return Result
+     */
+    @PostMapping(value = "/reset/password")
+    public Result<Object> resetPassword(
+            @RequestParam("username") String username,
+            @RequestParam("new_password") String newPassword,
+            @RequestParam("confirm_new_password") String confirmNewPassword
+    ) {
+        return userService.resetPassword(username, newPassword, confirmNewPassword);
     }
 }

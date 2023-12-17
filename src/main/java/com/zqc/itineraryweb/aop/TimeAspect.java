@@ -31,10 +31,10 @@ public class TimeAspect {
         } finally {
             long endTime = System.currentTimeMillis();
             long executionTime = endTime - startTime;
-            String methodName = joinPoint.getSignature().toShortString();
+            String methodName = joinPoint.getSignature().getName();
             String className = joinPoint.getTarget().getClass().getName();
 
-            LOGGER.info("执行方法: {} 在类: {} 中，执行耗时: {}ms", methodName, className, executionTime);
+            LOGGER.info("执行方法: {}()，在类路径:{}中，执行耗时: {}ms", methodName, className, executionTime);
         }
 
         return result;

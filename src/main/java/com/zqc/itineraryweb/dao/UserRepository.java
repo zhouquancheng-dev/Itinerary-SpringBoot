@@ -33,86 +33,56 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      *
      * @param userIdBytes 用户id，传入UUID对象字节格式
      * @param username    用户名
-     * @return password字符串
+     * @return User实体对象
      */
     @Query("""
-             select u.password from User u
+             select u from User u
              where u.userId = :userIdBytes
              and u.username = :username
             """)
-    String findUserByUserIdAndUsername(
+    User findUserByUserIdAndUsername(
             @Param("userIdBytes") byte[] userIdBytes,
             @Param("username") String username
     );
 
     /**
-     * 按用户名查找Token
+     * 根据用户id和用户名更新LastLoginAt的值
      *
-     * @param username 用户名
-     * @return int
-     */
-    @Query("""
-            select count(u.token) from User u where u.username = :username
-            """)
-    int findTokenByUsername(@Param("username") String username);
-
-    /**
-     * 根据用户id和用户名更新Token、LastLoginAt的值
-     *
-     * @param newToken    新的Token值
-     * @param lastLoginAt 新的日期时间
+     * @param newLastLoginAt 新的日期时间
      * @param userIdBytes 用户id
      * @param username    用户名
      */
     @Modifying
     @Transactional
     @Query("""
-            update User u set u.token = :newToken, u.lastLoginAt = :lastLoginAt
+            update User u
+            set u.lastLoginAt = :newLastLoginAt
             where u.userId = :userIdBytes
             and u.username = :username
             """)
-    void updateTokenAndLastLoginAtByUserIdAndUsername(
-            @Param("newToken") String newToken,
-            @Param("lastLoginAt") LocalDateTime lastLoginAt,
+    int updateLastLoginAtByUserIdAndUsername(
+            @Param("newLastLoginAt") LocalDateTime newLastLoginAt,
             @Param("userIdBytes") byte[] userIdBytes,
             @Param("username") String username
     );
 
     /**
-     * 根据用户id和用户名更新Token的值
+     * 通过用户名更新 UserId 和 Password 的值
      *
-     * @param newToken    新Token值
-     * @param userIdBytes 用户id
-     * @param username    用户名
-     */
-    @Modifying
-    @Transactional
-    @Query("""
-            update User u set u.token = :newToken
-            where u.userId = :userIdBytes
-            and u.username = :username
-            """)
-    void updateTokenByUserIdAndUsername(
-            @Param("newToken") String newToken,
-            @Param("userIdBytes") byte[] userIdBytes,
-            @Param("username") String username
-    );
-
-    /**
-     * 根据用户名更新Token值
-     *
-     * @param newToken 新Token值
+     * @param newUserIdBytes 新用户id
+     * @param newPassword 新密码
      * @param username 用户名
      */
     @Modifying
     @Transactional
     @Query("""
-            update User u set u.token = :newToken
+            update User u
+            set u.userId = :newUserIdBytes, u.password = :newPassword
             where u.username = :username
             """)
-    void updateTokenByUsername(
-            @Param("newToken") String newToken,
+    int updateUserIdAndPasswordByUsername(
+            @Param("newUserIdBytes") byte[] newUserIdBytes,
+            @Param("newPassword") String newPassword,
             @Param("username") String username
     );
-
 }

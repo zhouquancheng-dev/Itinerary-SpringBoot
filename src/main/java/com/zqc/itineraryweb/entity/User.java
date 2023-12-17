@@ -12,13 +12,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "tb_user_login")
+@Table(name = "tb_user")
 public class User {
     @Id
     private byte[] userId;
     private String username;
     private String password;
-    private String token;
     private LocalDateTime lastLoginAt;
     private boolean locked;
     private LocalDateTime createdAt;

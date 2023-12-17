@@ -27,8 +27,8 @@ public class ValidationUtils {
      * @return 符合正则返回true，否则返回false
      */
     public static boolean isValidUsername(String username) {
-        // 字母、数字、下划线、连字符，长度范围为 3 ~ 16 个字符
-        String regex = "^[a-zA-Z0-9_-]{3,16}$";
+        // 国内合法11位手机号码
+        String regex = "^1\\d{10}$";
         return isValidPattern(username, regex);
     }
 
@@ -39,8 +39,9 @@ public class ValidationUtils {
      * @return 符合正则返回true，否则返回false
      */
     public static boolean isValidPassword(String password) {
-        // 8 到 20 个字符，至少包含一个大写，一个小写，一个数字，一个特殊字符
-        String regex = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-@#$%^&+?;,.=!])(?!.*\\s).{8,20}$";
+        // 大写字母、小写字母、数字、特殊字符 (. , ; : ! @ # $ % ^ & < > ( ) * ? = + -)
+        // 6位以上且包含任意3项及以上的类型
+        String regex = "^(?=.*[A-Z])|(?=.*[a-z])|(?=.*\\d)|(?=.*[.,;:!@#$%^&<>()*?=+-])\\S{6,}$";
         return isValidPattern(password, regex);
     }
 
@@ -51,20 +52,20 @@ public class ValidationUtils {
      * @return 符合正则返回true，否则返回false
      */
     public static boolean isValidPhoneNumber(String phoneNumber) {
-        // 匹配11位数字
-        String regex = "^[0-9]{11}$";
+        // 手机号(mobile phone)中国(严谨), 根据工信部2019年最新公布的手机号段
+        String regex = "^(?:(?:\\+|00)86)?1(?:3\\d|4[5-79]|5[0-35-9]|6[5-7]|7[0-8]|8\\d|9[1589])\\d{8}$";
         return isValidPattern(phoneNumber, regex);
     }
 
     /**
-     * 用户手机号正则验证
+     * 用户短信验证码正则验证
      *
      * @param smsCode 验证码
      * @return 符合正则返回true，否则返回false
      */
     public static boolean isValidSmsCode(String smsCode) {
         // 匹配数字
-        String regex = "^[0-9]+$";
+        String regex = "^\\d+$";
         return isValidPattern(smsCode, regex);
     }
 

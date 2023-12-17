@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-rCN">
+<head>
+    <meta charset="UTF-8">
+    <title>Captcha</title>
+    <style>
+        #button {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <button id="button">验证</button>
+    <div id="captcha-element"></div>    <!--预留的验证码页面元素，用于配置初始化函数中的element参数-->
+</body>
+</html>
+
+<!--集成主JS-->
+<script type="text/javascript" src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"></script>
+<script>
+    let captcha;
+    // 弹出式
+    initAliyunCaptcha({
+        SceneId: 'yz21qiqa', // 场景ID。通过步骤一添加验证场景后，您可以在验证码场景列表，获取该场景的场景ID
+        prefix: 'szksc0', // 身份标。开通阿里云验证码2.0后，您可以在控制台概览页面的实例基本信息卡片区域，获取身份标
+        mode: 'popup', // 验证码模式。embed表示要集成的验证码模式为嵌入式。无需修改
+        element: '#captcha-element', // 页面上预留的渲染验证码的元素，与原代码中预留的页面元素保持一致。
+        button: '#button', // 触发业务请求的元素。button表示单击登录按钮后，触发captchaVerifyCallback函数。您可以根据实际使用的元素修改element的值
+        captchaVerifyCallback: captchaVerifyCallback, // 业务请求(带验证码校验)回调函数，无需修改
+        onBizResultCallback: onBizResultCallback, // 业务请求结果回调函数，无需修改
+        getInstance: getInstance, // 绑定验证码实例函数，无需修改
+        slideStyle: {
+            width: 360,
+            height: 40,
+        }, // 滑块验证码样式，支持自定义宽度和高度，单位为px。其中，width最小值为320 px
+        language: 'cn', // 验证码语言类型，支持简体中文（cn）、繁体中文（tw）、英文（en）
+        immediate: false, // 完成验证后，是否立即发送验证请求（调用captchaVerifyCallback函数）
+    });
+
+    // 绑定验证码实例函数。该函数为固定写法，无需修改
+    function getInstance(instance) {
+        captcha = instance;
+    }
+
+    // 业务请求(带验证码校验)回调函数
+    /**
+     * @name captchaVerifyCallback
+     * 请求参数：由验证码脚本回调的验证参数，不需要做任何处理，直接传给服务端即可
+     * @params {string} captchaVerifyParam
+     * 返回参数：字段名固定，captchaResult为必选；如无业务验证场景时，bizResult为可选
+     * @returns {{captchaResult: boolean, bizResult?: boolean|undefined}}
+     */
+    async function captchaVerifyCallback(captchaVerifyParam) {
+        console.log(captchaVerifyParam)
+
+        // 向后端发起业务请求，获取验证码验证结果和业务结果
+        const response = await fetch('https://api.zyuxr.top/validate/ali-captcha', {
+            method: 'post',
+            headers: { 'Content-Type': 'application/json' },
+            body: captchaVerifyParam
+        });
+
+        const result = await response.json();
+        console.log("返回值:", result)
+
+        // 构造标准返回参数
+        const verifyResult = {
+            captchaResult: result,
+            bizResult: null
+        };
+
+        // 将验证结果返回自定义Java接口
+        window.AndroidJsInterface && window.AndroidJsInterface.getVerifyResult(JSON.stringify(verifyResult));
+        return verifyResult;
+    }
+
+    // 业务请求验证结果回调函数
+    function onBizResultCallback(bizResult) {
+        // 将HTML5页面的业务请求验证结果回调函数置为空函数，实现将HTML5侧的业务操作迁移至Android App侧
+    }
+
+    window.onload = function () {
+        const button = document.getElementById('button');
+        button.click();
+    }
+</script>

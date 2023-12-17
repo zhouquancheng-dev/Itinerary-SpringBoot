@@ -3,13 +3,9 @@ package com.zqc.itineraryweb.controller;
 import com.zqc.itineraryweb.entity.Result;
 import com.zqc.itineraryweb.entity.SmsDTO;
 import com.zqc.itineraryweb.service.SmsService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 
-@Slf4j
 @RestController
 @RequestMapping(value = "/sms")
 public class SmsController {
@@ -20,19 +16,28 @@ public class SmsController {
         this.smsService = smsService;
     }
 
+    /**
+     * 发送验证码
+     *
+     * @param phoneNumber 国内合法11位手机号
+     * @return Result
+     */
     @PostMapping(
-            value = "/save",
+            value = "/send",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
-    public Result<Object> saveSmsData(
-            @RequestParam("phone_number") String phoneNumber,
-            @RequestParam("sms_code") String code,
-            @RequestParam("biz_id") String bizId,
-            @RequestParam("send_time") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime sendTime
-    ) {
-        return smsService.saveSmsData(phoneNumber, code, bizId, sendTime);
+    public Result<Object> sendSmsCode(@RequestParam("phone_number") String phoneNumber) {
+        return smsService.sendSmsCode(phoneNumber);
     }
 
+    /**
+     * 校验验证码
+     *
+     * @param phoneNumber 国内合法11位手机号
+     * @param code        验证码
+     * @param bizId       发送验证码的发送回执
+     * @return Result
+     */
     @PostMapping(
             value = "/check",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE

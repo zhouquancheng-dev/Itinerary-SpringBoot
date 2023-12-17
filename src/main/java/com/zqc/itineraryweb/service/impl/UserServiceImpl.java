@@ -13,24 +13,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import static com.zqc.itineraryweb.utils.UUIDUtils.*;
-import static com.zqc.itineraryweb.utils.ValidationUtils.isValidPassword;
-import static com.zqc.itineraryweb.utils.ValidationUtils.isValidUsername;
+import static com.zqc.itineraryweb.utils.ValidationUtils.*;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    // 5天过期 5 * 24 * 60 * 60 * 1000L
-    private static final long EXPIRATION_TIME = 5 * 24 * 60 * 60 * 1000L;
+    // 过期时间
+    private static final long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L;
 
     private final UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder;
+
     private final RSAKeyService rsaKeyService;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RSAKeyService rsaKeyService) {
@@ -40,87 +42,46 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Result<Object> userLogin(String username, String password) {
-        if (username.isEmpty() || password.isEmpty()) {
-            return Result.error("登录失败，请检查输入");
+    public Result<Object> login(String username, String password) {
+        if (!isValidUsername(username) || !isValidPassword(password)) {
+            return Result.error("登录失败，用户名或密码错误");
         }
 
         User user = userRepository.findUserByUsername(username);
         if (user != null) {
             if (passwordEncoder.matches(password, user.getPassword())) {
                 UUID uuid = convertBytesToUUID(user.getUserId());
-                String jwtToken = user.getToken();
+                // 非对称加密密码
+                String encryptedPassword = rsaKeyService.encryptPassword(password);
 
-                if (jwtToken == null || JwtUtils.isJwtExpired(jwtToken)) {
-                    // 非对称加密密码
-                    String encryptedPassword = rsaKeyService.encryptPassword(password);
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("userId", uuid);
+                claims.put("username", username);
+                claims.put("encryptedPassword", encryptedPassword);
+                String jwt = JwtUtils.generateJwt(claims, EXPIRATION_TIME);
 
-                    Map<String, Object> claims = new HashMap<>();
-                    claims.put("userId", uuid);
-                    claims.put("username", user.getUsername());
-                    claims.put("encryptedPassword", encryptedPassword);
-
-                    jwtToken = JwtUtils.generateJwt(claims, EXPIRATION_TIME);
-                }
-
-                // 更新用户的jwt令牌和最后登录时间
-                userRepository.updateTokenAndLastLoginAtByUserIdAndUsername(
-                        jwtToken,
+                // 更新用户的最后登录时间
+                int updatedRows = userRepository.updateLastLoginAtByUserIdAndUsername(
                         LocalDateTime.now(),
                         user.getUserId(),
-                        username
+                        user.getUsername()
                 );
-
-                return Result.success(jwtToken);
+                if (updatedRows > 0) {
+                    return Result.success(jwt);
+                }
             }
         }
         return Result.error("登录失败，用户名或密码错误");
     }
 
     @Override
-    public Result<Object> autoLogin(String token) {
-        if (token.isEmpty()) {
-            return Result.error("请求头token为空，请重新登录");
-        }
-
-        try {
-            Claims claims = JwtUtils.parseJwt(token);
-            String userId = claims.get("userId", String.class);
-            String username = claims.get("username", String.class);
-            String encryptedPassword = claims.get("encryptedPassword", String.class);
-
-            // 使用私钥解密密码
-            String decryptedPassword = rsaKeyService.decryptPassword(encryptedPassword);
-
-            byte[] userIdBytes = convertUUIDToBytes(UUID.fromString(userId));
-            String hashedPassword = userRepository.findUserByUserIdAndUsername(userIdBytes, username);
-            if (hashedPassword != null) {
-                if (passwordEncoder.matches(decryptedPassword, hashedPassword)) {
-                    // 密码验证成功
-                    return Result.success("自动登录成功");
-                }
-            }
-            return Result.error("自动登录失败，用户名或密码不匹配");
-        } catch (ExpiredJwtException e) {
-            LOGGER.error("自动登录失败，令牌已过有效期");
-            return Result.error("登录已过有效期，请重新登录");
-        } catch (JwtException e) {
-            LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
-            return Result.error("自动登录失败");
-        } catch (Exception e) {
-            LOGGER.error("自动登录时发生错误: {}, 错误信息为: {}", e, e.getMessage());
-            return Result.error("自动登录失败");
-        }
-    }
-
-    @Override
-    public Result<Object> registerUser(String username, String password) {
-        if (!isValidUsername(username) && !isValidPassword(password)) {
+    public Result<Object> register(String username, String password, String confirmPassword) {
+        if (!isValidUsername(username) || !isValidPassword(password) || !password.equals(confirmPassword)) {
             return Result.error("注册失败，请检查输入");
         }
 
         if (userRepository.existsByUsername(username)) {
-            return Result.error("用户名已存在");
+            return Result.error("当前用户名已注册");
         }
 
         // 哈希加密密码
@@ -137,31 +98,144 @@ public class UserServiceImpl implements UserService {
         user.setCreatedAt(now);
 
         userRepository.save(user);
-        return Result.success();
+        return Result.success("注册成功");
     }
 
     @Override
     public Result<Object> logout(String token) {
         if (token.isEmpty()) {
-            return Result.error("登出失败，请求头token为空");
+            return Result.error("退出登录失败，请求头Token为空");
+        }
+        try {
+            Claims claims = JwtUtils.parseJwt(token);
+            String userId = claims.get("userId", String.class);
+            String username = claims.get("username", String.class);
+            String encryptedPassword = claims.get("encryptedPassword", String.class);
+
+            String decryptedPassword = rsaKeyService.decryptPassword(encryptedPassword);
+            byte[] userIdBytes = convertUUIDToBytes(UUID.fromString(userId));
+
+            User user = userRepository.findUserByUserIdAndUsername(userIdBytes, username);
+            if (user != null) {
+                if (passwordEncoder.matches(decryptedPassword, user.getPassword())) {
+                    return Result.success("退出登录成功");
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            LOGGER.error("JWT令牌已过有效期");
+            return Result.success();
+        } catch (JwtException e) {
+            LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+        }
+        return Result.error("退出登录失败");
+    }
+
+    @Override
+    public Result<Object> autoLogin(String token) {
+        if (token.isEmpty()) {
+            return Result.error("自动登录失败，请求头Token为空");
         }
 
         try {
             Claims claims = JwtUtils.parseJwt(token);
             String userId = claims.get("userId", String.class);
             String username = claims.get("username", String.class);
+            String encryptedPassword = claims.get("encryptedPassword", String.class);
 
+            String decryptedPassword = rsaKeyService.decryptPassword(encryptedPassword);
             byte[] userIdBytes = convertUUIDToBytes(UUID.fromString(userId));
-            // 将数据库token置为空
-            userRepository.updateTokenByUserIdAndUsername(null, userIdBytes, username);
-            return Result.success();
+
+            User user = userRepository.findUserByUserIdAndUsername(userIdBytes, username);
+            if (user != null) {
+                if (passwordEncoder.matches(decryptedPassword, user.getPassword())) {
+                    return Result.success("自动登录成功");
+                } else {
+                    return Result.error("自动登录失败，用户名或密码错误");
+                }
+            } else {
+                return Result.error("自动登录失败，用户id错误");
+            }
         } catch (ExpiredJwtException e) {
-            LOGGER.error("令牌已过有效期");
-            return Result.error("登出失败");
+            LOGGER.error("JWT令牌已过有效期");
+            return Result.error("登录已过有效期，请重新登录");
         } catch (JwtException e) {
             LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
-            return Result.error("登出失败");
+        } catch (Exception e) {
+            LOGGER.error("发生错误: {}, 错误信息为: {}", e, e.getMessage());
+        }
+        return Result.error("自动登录失败");
+    }
+
+    @Override
+    public Result<Object> phoneNumberLogin(String phoneNumber) {
+        if (!isValidPhoneNumber(phoneNumber)) {
+            return Result.error("请检查手机号码");
+        }
+        if (!userRepository.existsByUsername(phoneNumber)) {
+            // 生成随机密码
+            String randomPassword = generateRandomPassword();
+            // 哈希加密密码
+            String hashedPassword = passwordEncoder.encode(randomPassword);
+            byte[] uuidBytes = generateUUIDToBytes();
+            LocalDateTime now = LocalDateTime.now();
+
+            User user = new User();
+            user.setUserId(uuidBytes);
+            user.setUsername(phoneNumber);
+            user.setPassword(hashedPassword);
+            user.setLastLoginAt(now);
+            user.setCreatedAt(now);
+
+            userRepository.save(user);
+        }
+        return Result.success("手机登录成功");
+    }
+
+    @Override
+    public Result<Object> checkRegistration(String username) {
+        if (!isValidUsername(username)) {
+            return Result.error("请检查输入账号");
+        }
+
+        if (!userRepository.existsByUsername(username)) {
+            return Result.error("当前用户名未注册");
+        } else {
+            return Result.success();
         }
     }
 
+    @Override
+    public Result<Object> resetPassword(String username, String newPassword, String confirmNewPassword) {
+        if (!isValidUsername(username)) {
+            return Result.error("重设密码失败，请检查用户名");
+        }
+        User user = userRepository.findUserByUsername(username);
+        if (user != null) {
+            if (!isValidPassword(newPassword) || !newPassword.equals(confirmNewPassword)) {
+                return Result.error("重设密码失败，请检查密码");
+            }
+            if (passwordEncoder.matches(newPassword, user.getPassword())) {
+                return Result.error("重设密码失败，不能与旧密码相同");
+            }
+            byte[] uuidBytes = generateUUIDToBytes();
+            String hashedPassword = passwordEncoder.encode(newPassword);
+            int updatedRows = userRepository.updateUserIdAndPasswordByUsername(uuidBytes, hashedPassword, username);
+            if (updatedRows > 0) {
+                return Result.success("重设密码成功");
+            }
+        }
+        return Result.error("重设密码失败");
+    }
+
+    private String generateRandomPassword() {
+        // 生成一个包含大小写字母和数字的随机字符串作为密码
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder password = new StringBuilder(8); // 密码长度为8，可以根据需要调整
+        for (int i = 0; i < 8; i++) {
+            int randomIndex = random.nextInt(chars.length());
+            password.append(chars.charAt(randomIndex));
+        }
+        return password.toString();
+    }
 }

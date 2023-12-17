@@ -15,19 +15,22 @@ public interface SmsRepository extends JpaRepository<Sms, Integer> {
      * @param phoneNumber 手机号
      * @return 存在返回true，否则false
      */
-    boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByPhoneNumber(@Param("phoneNumber") String phoneNumber);
 
     /**
-     * 通过手机号和id查找短信信息
+     * 通过手机号和bizId查找短信信息
      *
      * @param phoneNumber 手机号
      * @param bizId 发送回执id
      * @return 返回Sms实体对象
      */
-    Sms findSmsByPhoneNumberAndBizId(String phoneNumber, String bizId);
+    Sms findSmsByPhoneNumberAndBizId(
+            @Param("phoneNumber") String phoneNumber,
+            @Param("bizId") String bizId
+    );
 
     /**
-     * 通过手机号删除短信
+     * 通过手机号删除
      *
      * @param phoneNumber 手机号
      */
@@ -50,8 +53,7 @@ public interface SmsRepository extends JpaRepository<Sms, Integer> {
             s.phoneNumber = :#{#sms.phoneNumber},
             s.smsCode = :#{#sms.smsCode},
             s.bizId = :#{#sms.bizId},
-            s.sendTime = :#{#sms.sendTime},
-            s.token = :#{#sms.token},
+            s.sendDate = :#{#sms.sendDate},
             s.createTime = :#{#sms.createTime}
             WHERE s.phoneNumber = :#{#sms.phoneNumber}
             """)

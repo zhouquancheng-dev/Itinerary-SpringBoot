@@ -1,20 +1,21 @@
 package com.zqc.itineraryweb.service.impl;
 
+import com.aliyun.dysmsapi20170525.models.QuerySendDetailsResponse;
+import com.aliyun.dysmsapi20170525.models.SendSmsResponse;
 import com.zqc.itineraryweb.dao.SmsRepository;
 import com.zqc.itineraryweb.entity.Result;
 import com.zqc.itineraryweb.entity.Sms;
 import com.zqc.itineraryweb.entity.SmsDTO;
 import com.zqc.itineraryweb.service.SmsService;
-import com.zqc.itineraryweb.utils.JwtUtils;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.zqc.itineraryweb.utils.AliYunSMSClient;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.Random;
 
 import static com.zqc.itineraryweb.utils.MaskUtils.maskPhoneNumber;
 import static com.zqc.itineraryweb.utils.ValidationUtils.isValidPhoneNumber;
@@ -23,12 +24,19 @@ import static com.zqc.itineraryweb.utils.ValidationUtils.isValidSmsCode;
 @Service
 public class SmsServiceImpl implements SmsService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SmsServiceImpl.class);
-
-    // 5分钟 5 * 60 * 1000L
+    // 验证码的有效期，5分钟
     private static final long EXPIRATION_TIME = 5 * 60 * 1000L;
 
+    private static final String INVALID_CODE_ERROR_MESSAGE = "验证码错误";
+
+    private static final String EXPIRED_CODE_ERROR_MESSAGE = "验证码已过有效期";
+
+    private static final String DELIVERED_MESSAGE = "DELIVERED";
+
+    private final Random random = new Random();
+
     private final SmsRepository smsRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     public SmsServiceImpl(SmsRepository smsRepository, PasswordEncoder passwordEncoder) {
@@ -37,79 +45,84 @@ public class SmsServiceImpl implements SmsService {
     }
 
     @Override
-    public Result<Object> saveSmsData(
-            String phoneNumber,
-            String code,
-            String bizId,
-            LocalDateTime sendTime
-    ) {
-        if (!isValidPhoneNumber(phoneNumber) && !isValidSmsCode(code)) {
-            return Result.error("保存失败，请检查输入");
+    public Result<Object> sendSmsCode(String phoneNumber) {
+        if (!isValidPhoneNumber(phoneNumber)) {
+            return Result.error("发送失败，请检查手机号码");
         }
 
-        // 哈希加密手机号、验证码
-        String hashedPhoneNumber = passwordEncoder.encode(code);
-        String hashedCode = passwordEncoder.encode(code);
+        int lowerBound = 1000;
+        int upperBound = 10000;
+        int randomCode = random.nextInt(upperBound - lowerBound) + lowerBound;
 
-        // 创建Jwt令牌并添加令牌负载
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("phone_number", hashedPhoneNumber);
-        claims.put("sms_code", hashedCode);
-        claims.put("biz_id", bizId);
-        String jwt = JwtUtils.generateJwt(claims, EXPIRATION_TIME);
+        SendSmsResponse response = AliYunSMSClient.sendSmsCode(phoneNumber, randomCode);
 
-        Sms sms = new Sms();
-        sms.setPhoneNumber(phoneNumber);
-        sms.setSmsCode(hashedCode);
-        sms.setBizId(bizId);
-        sms.setSendTime(sendTime);
-        sms.setToken(jwt);
-        sms.setCreateTime(LocalDateTime.now());
+        if (response != null) {
+            // 哈希加密验证码
+            String hashedSMSCode = passwordEncoder.encode(String.valueOf(randomCode));
 
-        boolean exists = smsRepository.existsByPhoneNumber(phoneNumber);
-        if (exists) {
-            // 如果新输入手机号存在则直接更新行
-            smsRepository.updateSmsByPhoneNumber(sms);
-        } else {
-            // 不存在则插入新行
-            smsRepository.save(sms);
+            Sms sms = new Sms();
+            sms.setPhoneNumber(phoneNumber);
+            sms.setSmsCode(hashedSMSCode);
+            sms.setBizId(response.body.bizId);
+            sms.setSendDate(LocalDate.now());
+            sms.setCreateTime(LocalDateTime.now());
+
+            boolean exists = smsRepository.existsByPhoneNumber(phoneNumber);
+            if (exists) {
+                // 如果发送的手机号已存在则直接更新对应行
+                smsRepository.updateSmsByPhoneNumber(sms);
+            } else {
+                // 不存在则插入新行
+                smsRepository.save(sms);
+            }
+
+            return Result.success(response.body);
         }
-        return Result.success();
+        return Result.error("发送失败");
     }
 
     @Override
     public Result<SmsDTO> validateSmsCode(String phoneNumber, String code, String bizId) {
-        if (!isValidPhoneNumber(phoneNumber) || code.isEmpty()) {
+        if (!isValidPhoneNumber(phoneNumber) || !isValidSmsCode(code)) {
             return Result.error("校验失败，请检查输入");
         }
 
         Sms sms = smsRepository.findSmsByPhoneNumberAndBizId(phoneNumber, bizId);
-        if (sms != null) {
-            if (!passwordEncoder.matches(code, sms.getSmsCode())) {
-                return Result.error("验证码错误");
-            }
-
-            String jwt = sms.getToken();
-            try {
-                JwtUtils.parseJwt(jwt);
-            } catch (ExpiredJwtException e) {
-                LOGGER.error("令牌已过有效期");
-                return Result.error("验证码已过有效期");
-            } catch (JwtException e) {
-                LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
-                return Result.error("JWT解析错误");
-            }
-
-            SmsDTO smsDTO = new SmsDTO();
-            smsDTO.setStatus(true);
-            // 脱敏电话号码并设置到DTO对象中
-            smsDTO.setPhoneNumber(maskPhoneNumber(sms.getPhoneNumber()));
-            smsDTO.setBizId(sms.getBizId());
-
-            smsRepository.deleteSmsByPhoneNumber(phoneNumber);
-            return Result.success(smsDTO);
+        if (sms == null || !passwordEncoder.matches(code, sms.getSmsCode())) {
+            return Result.error(INVALID_CODE_ERROR_MESSAGE);
         }
-        return Result.error("验证码错误");
+
+        String sendDateFormatted = sms.getSendDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        QuerySendDetailsResponse response = AliYunSMSClient.querySendDetails(phoneNumber, bizId, sendDateFormatted);
+        if (response != null && response.body.smsSendDetailDTOs.smsSendDetailDTO != null) {
+            String phoneNum = response.body.smsSendDetailDTOs.smsSendDetailDTO.get(0).phoneNum;
+            String errCode = response.body.smsSendDetailDTOs.smsSendDetailDTO.get(0).errCode;
+            String receiveDateStr = response.body.smsSendDetailDTOs.smsSendDetailDTO.get(0).receiveDate;
+
+            if (phoneNum.equals(phoneNumber) && errCode.equals(DELIVERED_MESSAGE)) {
+                // 将 receiveDate 字符串解析为 LocalDateTime
+                LocalDateTime receiveDate = LocalDateTime.parse(receiveDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                // 获取当前时间
+                LocalDateTime currentTime = LocalDateTime.now();
+                // 计算时间差（以秒为单位）
+                long timeDifferenceInSeconds = Duration.between(receiveDate, currentTime).getSeconds();
+
+                // 检查时间差是否在5分钟内（300秒）
+                if (timeDifferenceInSeconds <= EXPIRATION_TIME / 1000) {
+                    SmsDTO smsDTO = new SmsDTO();
+                    smsDTO.setStatus(true);
+                    smsDTO.setPhoneNumber(maskPhoneNumber(sms.getPhoneNumber()));
+                    smsDTO.setBizId(sms.getBizId());
+
+                    smsRepository.deleteSmsByPhoneNumber(phoneNumber);
+                    return Result.success(smsDTO);
+                } else {
+                    return Result.error(EXPIRED_CODE_ERROR_MESSAGE);
+                }
+            }
+        }
+        return Result.error(INVALID_CODE_ERROR_MESSAGE);
     }
 
 }
