@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * 全局异常处理方法，处理所有未捕获的异常。
@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result<Object> handleException(Exception exception) {
-        LOGGER.error("发生了错误: {}, 错误信息为: {}", exception, exception.getMessage());
+        logger.error("Exception: {}, Message: {}", exception, exception.getMessage());
         return Result.error("请求异常");
     }
 }

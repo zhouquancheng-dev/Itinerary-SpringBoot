@@ -10,21 +10,28 @@ import com.aliyun.tea.TeaUnretryableException;
 import com.aliyun.tea.ValidateException;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.teautil.models.RuntimeOptions;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * 阿里云 短信服务
+ *
+ * @author zqc
+ * @date 2024/6/21 16:19
+ **/
 @Component
-public class AliYunSMSClient {
+public class AliYunSmsClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AliYunSMSClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(AliYunSmsClient.class);
 
-    private static final String smsSignName = "驴游";
+    private static final String signName = "驴游";
 
-    private static final String smsTemplateCode = "SMS_462056166";
+    private static final String templateCode = "SMS_462056166";
 
-    private static final String smsEndpoint = "dysmsapi.aliyuncs.com";
+    private static final String endpoint = "dysmsapi.aliyuncs.com";
 
     private static String secretKey;
 
@@ -32,28 +39,32 @@ public class AliYunSMSClient {
 
     @Value("${ali.sms.accessKey}")
     public void setSecretKey(String secretKey) {
-        AliYunSMSClient.secretKey = secretKey;
+        AliYunSmsClient.secretKey = secretKey;
     }
 
     @Value("${ali.sms.accessKeySecret}")
     public void setAccessKeySecret(String accessKeySecret) {
-        AliYunSMSClient.accessKeySecret = accessKeySecret;
+        AliYunSmsClient.accessKeySecret = accessKeySecret;
     }
+
+    private static Client client;
 
     /**
      * 创建短信客户端
      */
     private static Client createSmsClient() {
-        Config config = new Config()
-                .setAccessKeyId(secretKey)
-                .setAccessKeySecret(accessKeySecret)
-                .setEndpoint(smsEndpoint);
-        try {
-            return new Client(config);
-        } catch (Exception e) {
-            LOGGER.error("创建短信客户端异常: {}", e.getMessage());
-            return null;
+        if (client == null) {
+            Config config = new Config()
+                    .setAccessKeyId(secretKey)
+                    .setAccessKeySecret(accessKeySecret)
+                    .setEndpoint(endpoint);
+            try {
+                client = new Client(config);
+            } catch (Exception e) {
+                logger.error("创建短信客户端异常: {}", e.getMessage());
+            }
         }
+        return client;
     }
 
     /**
@@ -66,13 +77,13 @@ public class AliYunSMSClient {
     public static SendSmsResponse sendSmsCode(String phoneNumber, int randomCode) {
         Client sendSmsCodeClient = createSmsClient();
         if (sendSmsCodeClient == null) {
-            LOGGER.error("短信客户端未成功创建");
+            logger.error("短信客户端未成功创建");
             return null;
         }
 
         SendSmsRequest sendSmsRequest = new SendSmsRequest()
-                .setSignName(smsSignName)
-                .setTemplateCode(smsTemplateCode)
+                .setSignName(signName)
+                .setTemplateCode(templateCode)
                 .setPhoneNumbers(phoneNumber)
                 .setTemplateParam("{\"code\":\"" + randomCode + "\"}");
 
@@ -80,21 +91,21 @@ public class AliYunSMSClient {
 
         try {
             SendSmsResponse sendSmsResponse = sendSmsCodeClient.sendSmsWithOptions(sendSmsRequest, runtimeOptions);
-//            LOGGER.info("阿里云发送验证码响应: {}", new Gson().toJson(sendSmsResponse.body));
+            logger.info("短信服务-发送验证码响应: {}", new Gson().toJson(sendSmsResponse.body));
             if ("OK".equals(sendSmsResponse.body.code)) {
                 return sendSmsResponse;
             }
         } catch (ValidateException ve) {
-            LOGGER.error("整体错误信息: {}", ve.getMessage());
+            logger.error("整体错误信息: {}", ve.getMessage());
         } catch (TeaUnretryableException tue) {
-            LOGGER.error("错误信息: {}", tue.getMessage());
-            LOGGER.error("请求记录: {}", tue.getLastRequest());
+            logger.error("错误信息: {}", tue.getMessage());
+            logger.error("请求记录: {}", tue.getLastRequest());
         } catch (TeaException te) {
-            LOGGER.error("错误码: {}", te.getCode());
-            LOGGER.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
-            LOGGER.error("具体错误内容: {}", te.getData());
+            logger.error("错误码: {}", te.getCode());
+            logger.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
+            logger.error("具体错误内容: {}", te.getData());
         } catch (Exception e) {
-            LOGGER.error("Exception: {}", e.getMessage());
+            logger.error("Exception: {}", e.getMessage());
         }
 
         // 如果发生异常，则返回null
@@ -112,7 +123,7 @@ public class AliYunSMSClient {
     public static QuerySendDetailsResponse querySendDetails(String phoneNumber, String bizId, String sendDate) {
         Client smsDetailsClient = createSmsClient();
         if (smsDetailsClient == null) {
-            LOGGER.error("短信客户端未成功创建");
+            logger.error("短信客户端未成功创建");
             return null;
         }
 
@@ -128,21 +139,21 @@ public class AliYunSMSClient {
         try {
             QuerySendDetailsResponse querySendDetailsResponse =
                     smsDetailsClient.querySendDetailsWithOptions(querySendDetailsRequest, runtimeOptions);
-//            LOGGER.info("阿里云查询短信详情响应: {}", new Gson().toJson(querySendDetailsResponse.body));
+            logger.info("短信服务-查询短信发送详情响应: {}", new Gson().toJson(querySendDetailsResponse.body));
             if ("OK".equals(querySendDetailsResponse.body.code)) {
                 return querySendDetailsResponse;
             }
         } catch (ValidateException ve) {
-            LOGGER.error("整体错误信息: {}", ve.getMessage());
+            logger.error("整体错误信息: {}", ve.getMessage());
         } catch (TeaUnretryableException tue) {
-            LOGGER.error("错误信息: {}", tue.getMessage());
-            LOGGER.error("请求记录: {}", tue.getLastRequest());
+            logger.error("错误信息: {}", tue.getMessage());
+            logger.error("请求记录: {}", tue.getLastRequest());
         } catch (TeaException te) {
-            LOGGER.error("错误码: {}", te.getCode());
-            LOGGER.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
-            LOGGER.error("具体错误内容: {}", te.getData());
+            logger.error("错误码: {}", te.getCode());
+            logger.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
+            logger.error("具体错误内容: {}", te.getData());
         } catch (Exception e) {
-            LOGGER.error("Exception: {}", e.getMessage());
+            logger.error("Exception: {}", e.getMessage());
         }
 
         // 如果发生异常，则返回null

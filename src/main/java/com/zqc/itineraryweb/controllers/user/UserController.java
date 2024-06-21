@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.controller;
+package com.zqc.itineraryweb.controllers.user;
 
 import com.zqc.itineraryweb.entity.Result;
 import com.zqc.itineraryweb.service.UserService;

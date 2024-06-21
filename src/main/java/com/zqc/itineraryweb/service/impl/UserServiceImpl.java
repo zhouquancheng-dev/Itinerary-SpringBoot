@@ -24,7 +24,7 @@ import static com.zqc.itineraryweb.utils.ValidationUtils.*;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     // 过期时间
     private static final long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L;
@@ -122,10 +122,10 @@ public class UserServiceImpl implements UserService {
                 }
             }
         } catch (ExpiredJwtException e) {
-            LOGGER.error("JWT令牌已过有效期");
+            logger.error("JWT令牌已过有效期");
             return Result.success();
         } catch (JwtException e) {
-            LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+            logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
         }
         return Result.error("退出登录失败");
     }
@@ -156,12 +156,12 @@ public class UserServiceImpl implements UserService {
                 return Result.error("自动登录失败，用户id错误");
             }
         } catch (ExpiredJwtException e) {
-            LOGGER.error("JWT令牌已过有效期");
+            logger.error("JWT令牌已过有效期");
             return Result.error("登录已过有效期，请重新登录");
         } catch (JwtException e) {
-            LOGGER.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+            logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
         } catch (Exception e) {
-            LOGGER.error("发生错误: {}, 错误信息为: {}", e, e.getMessage());
+            logger.error("发生错误: {}, 错误信息为: {}", e, e.getMessage());
         }
         return Result.error("自动登录失败");
     }

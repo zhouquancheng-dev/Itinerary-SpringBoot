@@ -12,11 +12,11 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication
 public class ItinerarySpringBootWebApplication {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ItinerarySpringBootWebApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(ItinerarySpringBootWebApplication.class);
 
     public static void main(String[] args) {
         SpringApplication.run(ItinerarySpringBootWebApplication.class, args);
-        LOGGER.info("ItinerarySpringBoot 应用启动成功！");
+        logger.info("ItinerarySpringBoot 应用启动成功！");
     }
 
 }

@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.controller;
+package com.zqc.itineraryweb.controllers.login;
 
 import com.aliyun.captcha20230305.Client;
 import com.aliyun.captcha20230305.models.VerifyIntelligentCaptchaRequest;
@@ -23,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping(value = "/validate")
 public class CaptchaController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CaptchaController.class);
+    private static final Logger logger = LoggerFactory.getLogger(CaptchaController.class);
 
     @Value("${ali.captcha.accessKey}")
     private String secretKey;
@@ -99,17 +99,17 @@ public class CaptchaController {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-//            LOGGER.info("responseBody: {}", new Gson().fromJson(responseBody, Captcha.class));
+//            logger.info("responseBody: {}", new Gson().fromJson(responseBody, Captcha.class));
             if (responseBody != null) {
                 JsonObject jsonObject = JsonParser.parseString(responseBody).getAsJsonObject();
                 String result = jsonObject.get("result").getAsString();
                 return "success".equals(result);
             } else {
-                LOGGER.error("Response body is null");
+                logger.error("Response body is null");
                 return false;
             }
         } else {
-            LOGGER.error("Request failed with status code: " + response.getStatusCode());
+            logger.error("Request failed with status code: " + response.getStatusCode());
             return false;
         }
     }
@@ -141,13 +141,13 @@ public class CaptchaController {
             RuntimeOptions runtimeOptions = new RuntimeOptions();
             VerifyIntelligentCaptchaResponse response =
                     client.verifyIntelligentCaptchaWithOptions(request, runtimeOptions);
-//            LOGGER.info(new Gson().toJson(response.body));
+//            logger.info(new Gson().toJson(response.body));
             return response.body.result.verifyResult;
         } catch (TeaException error) {
-            LOGGER.error(error.message);
+            logger.error(error.message);
             return false;
         } catch (Exception _error) {
-            LOGGER.error(_error.getMessage());
+            logger.error(_error.getMessage());
             return false;
         }
     }

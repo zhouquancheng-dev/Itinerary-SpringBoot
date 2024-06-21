@@ -17,7 +17,7 @@ import java.util.Base64;
 @Service
 public class RSAKeyService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RSAKeyService.class);
+    private static final Logger logger = LoggerFactory.getLogger(RSAKeyService.class);
     private final PublicKey publicKey;
     private final PrivateKey privateKey;
 
@@ -40,19 +40,19 @@ public class RSAKeyService {
             byte[] encryptedBytes = cipher.doFinal(passwordBytes);
             return Base64.getEncoder().encodeToString(encryptedBytes);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.error("密码加密失败，无法找到算法: {}", e.getMessage());
+            logger.error("密码加密失败，无法找到算法: {}", e.getMessage());
             throw new RuntimeException("密码加密失败", e);
         } catch (NoSuchPaddingException e) {
-            LOGGER.error("密码加密失败，无法找到填充方式: {}", e.getMessage());
+            logger.error("密码加密失败，无法找到填充方式: {}", e.getMessage());
             throw new RuntimeException("密码加密失败", e);
         } catch (InvalidKeyException e) {
-            LOGGER.error("密码加密失败，无效的密钥: {}", e.getMessage());
+            logger.error("密码加密失败，无效的密钥: {}", e.getMessage());
             throw new RuntimeException("密码加密失败", e);
         } catch (IllegalBlockSizeException e) {
-            LOGGER.error("密码加密失败，非法的块大小: {}", e.getMessage());
+            logger.error("密码加密失败，非法的块大小: {}", e.getMessage());
             throw new RuntimeException("密码加密失败", e);
         } catch (BadPaddingException e) {
-            LOGGER.error("密码加密失败，填充错误: {}", e.getMessage());
+            logger.error("密码加密失败，填充错误: {}", e.getMessage());
             throw new RuntimeException("密码加密失败", e);
         }
     }
@@ -71,19 +71,19 @@ public class RSAKeyService {
             byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.error("密码解密失败，无法找到算法: {}", e.getMessage());
+            logger.error("密码解密失败，无法找到算法: {}", e.getMessage());
             throw new RuntimeException("密码解密失败", e);
         } catch (NoSuchPaddingException e) {
-            LOGGER.error("密码解密失败，无法找到填充方式: {}", e.getMessage());
+            logger.error("密码解密失败，无法找到填充方式: {}", e.getMessage());
             throw new RuntimeException("密码解密失败", e);
         } catch (InvalidKeyException e) {
-            LOGGER.error("密码解密失败，无效的密钥: {}", e.getMessage());
+            logger.error("密码解密失败，无效的密钥: {}", e.getMessage());
             throw new RuntimeException("密码解密失败", e);
         } catch (IllegalBlockSizeException e) {
-            LOGGER.error("密码解密失败，非法的块大小: {}", e.getMessage());
+            logger.error("密码解密失败，非法的块大小: {}", e.getMessage());
             throw new RuntimeException("密码解密失败", e);
         } catch (BadPaddingException e) {
-            LOGGER.error("密码解密失败，填充错误: {}", e.getMessage());
+            logger.error("密码解密失败，填充错误: {}", e.getMessage());
             throw new RuntimeException("密码解密失败", e);
         }
     }

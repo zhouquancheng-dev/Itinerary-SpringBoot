@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TimeAspect {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimeAspect.class);
+    private static final Logger logger = LoggerFactory.getLogger(TimeAspect.class);
 
     @Around("execution(* com.zqc.itineraryweb.service.*.*(..))")
     public Object recordTime(ProceedingJoinPoint joinPoint) {
@@ -22,9 +22,9 @@ public class TimeAspect {
             result = joinPoint.proceed();
         } catch (Throwable e) {
             // 打印异常信息，然后继续执行方法
-            LOGGER.error("方法执行发生错误: {}", e.getMessage());
+            logger.error("方法执行发生错误: {}", e.getMessage());
             for (StackTraceElement stackTraceElement : e.getStackTrace()) {
-                LOGGER.error(stackTraceElement.toString());
+                logger.error(stackTraceElement.toString());
             }
             // 设置result为null或者其他适当的默认值，以便方法继续执行
             result = null;
@@ -34,7 +34,7 @@ public class TimeAspect {
             String methodName = joinPoint.getSignature().getName();
             String className = joinPoint.getTarget().getClass().getName();
 
-            LOGGER.info("执行方法: {}()，在类路径:{}中，执行耗时: {}ms", methodName, className, executionTime);
+            logger.info("执行方法: {}()，在类路径:{}中，执行耗时: {}ms", methodName, className, executionTime);
         }
 
         return result;

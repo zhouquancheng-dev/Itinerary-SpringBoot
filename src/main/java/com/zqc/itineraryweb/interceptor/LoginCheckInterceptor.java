@@ -11,7 +11,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @Component
 public class LoginCheckInterceptor implements HandlerInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginCheckInterceptor.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoginCheckInterceptor.class);
+    private static final String ATTRIBUTE_ALREADY_FILTERED = "alreadyFiltered";
 
     @Override
     public boolean preHandle(
@@ -19,10 +20,11 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
             @NonNull HttpServletResponse response,
             @NonNull Object handler
     ) {
-        // 获取请求 url
-        String url = request.getRequestURL().toString();
-        LOGGER.info("请求的URL: {}", url);
+        if (request.getAttribute(ATTRIBUTE_ALREADY_FILTERED) == null) {
+            request.setAttribute(ATTRIBUTE_ALREADY_FILTERED, Boolean.TRUE);
+            String url = request.getRequestURL().toString();
+            logger.info("请求的URL: {}, Thread ID: {}", url, Thread.currentThread().getId());
+        }
         return true;
     }
-
 }
