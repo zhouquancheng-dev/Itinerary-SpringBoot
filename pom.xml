@@ -116,13 +116,6 @@
             <version>1.17.0</version>
         </dependency>
 
-        <!-- 阿里云 Captcha 行为验证码 -->
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>captcha20230305</artifactId>
-            <version>1.1.2</version>
-        </dependency>
-
         <!-- 阿里云短信服务 -->
         <!-- https://mvnrepository.com/artifact/com.aliyun/dysmsapi20170525 -->
         <dependency>

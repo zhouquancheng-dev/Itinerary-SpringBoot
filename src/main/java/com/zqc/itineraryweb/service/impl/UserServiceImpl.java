@@ -1,7 +1,7 @@
 package com.zqc.itineraryweb.service.impl;
 
 import com.zqc.itineraryweb.entity.Result;
-import com.zqc.itineraryweb.entity.User;
+import com.zqc.itineraryweb.entity.user.User;
 import com.zqc.itineraryweb.dao.UserRepository;
 import com.zqc.itineraryweb.service.RSAKeyService;
 import com.zqc.itineraryweb.service.UserService;

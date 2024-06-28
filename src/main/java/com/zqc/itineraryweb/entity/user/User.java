@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.entity;
+package com.zqc.itineraryweb.entity.user;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

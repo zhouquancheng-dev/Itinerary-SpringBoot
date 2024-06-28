@@ -1,13 +1,10 @@
 package com.zqc.itineraryweb.controllers.login;
 
-import com.aliyun.captcha20230305.Client;
-import com.aliyun.captcha20230305.models.VerifyIntelligentCaptchaRequest;
-import com.aliyun.captcha20230305.models.VerifyIntelligentCaptchaResponse;
-import com.aliyun.tea.TeaException;
-import com.aliyun.teaopenapi.models.Config;
-import com.aliyun.teautil.models.RuntimeOptions;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zqc.itineraryweb.entity.captcha.*;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 import org.slf4j.Logger;
@@ -18,6 +15,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(value = "/validate")
@@ -25,11 +25,8 @@ public class CaptchaController {
 
     private static final Logger logger = LoggerFactory.getLogger(CaptchaController.class);
 
-    @Value("${ali.captcha.accessKey}")
-    private String secretKey;
-
-    @Value("${ali.captcha.accessKeySecret}")
-    private String accessKeySecret;
+    @Value("${ali.captcha.key}")
+    private String aliCaptchaKey;
 
     @Value("${gt.loginAction.captchaKey}")
     private String loginCaptchaKey;
@@ -39,12 +36,18 @@ public class CaptchaController {
 
     private final RestTemplate restTemplate;
 
-    public CaptchaController(RestTemplate restTemplate) {
+    private final WebClient webClient;
+
+    private final ObjectMapper objectMapper;
+
+    public CaptchaController(RestTemplate restTemplate, WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
+        this.webClient = webClientBuilder.build();
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * 极验验证码服务端二次校验
+     * 极验行为验证码服务端二次校验
      *
      * @param captchaId     验证 id
      * @param lotNumber     验证流水号
@@ -54,7 +57,7 @@ public class CaptchaController {
      * @return Boolean
      */
     @PostMapping(
-            value = "/gt-captcha",
+            value = "/gtCaptcha",
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
     )
     public Boolean verifyCaptcha(
@@ -99,7 +102,7 @@ public class CaptchaController {
 
         if (response.getStatusCode().is2xxSuccessful()) {
             String responseBody = response.getBody();
-//            logger.info("responseBody: {}", new Gson().fromJson(responseBody, Captcha.class));
+            logger.info("responseBody: {}", new Gson().fromJson(responseBody, GtCaptcha.class));
             if (responseBody != null) {
                 JsonObject jsonObject = JsonParser.parseString(responseBody).getAsJsonObject();
                 String result = jsonObject.get("result").getAsString();
@@ -109,46 +112,57 @@ public class CaptchaController {
                 return false;
             }
         } else {
-            logger.error("Request failed with status code: " + response.getStatusCode());
+            logger.error("Request failed with status code: {}", response.getStatusCode());
             return false;
         }
     }
 
-    /**
-     * 阿里云服务端验证码验证
-     *
-     * @param captchaVerifyParam 前端参数
-     * @return Boolean
-     */
-    @PostMapping(value = "/ali-captcha")
-    public Boolean verifyCaptcha(@RequestBody String captchaVerifyParam) {
-        Config config = new Config();
-        config.accessKeyId = secretKey;
-        config.accessKeySecret = accessKeySecret;
-        //设置请求地址
-        config.endpoint = "captcha.cn-shanghai.aliyuncs.com";
-        // 设置连接超时为5000毫秒
-        config.connectTimeout = 5000;
-        // 设置读超时为5000毫秒
-        config.readTimeout = 5000;
+    @PostMapping(
+            value = "/aliCaptcha",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public Mono<ResponseEntity<?>> verifyAliCaptcha(
+            @RequestBody AliCaptchaRequest request
+    ) {
+        String lotNumber = request.getLotNumber();
+        String captchaOutput = request.getCaptchaOutput();
+        String passToken = request.getPassToken();
+        String genTime = request.getGenTime();
+        String captchaId = request.getCaptchaId();
 
-        try {
-            Client client = new Client(config);
+        // 生成签名使用标准的hmac算法，使用用户当前完成验证的流水号lot_number作为原始消息message，使用客户验证私钥作为key
+        // 采用sha256散列算法将message和key进行单向散列生成最终的签名
+        String signToken = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, aliCaptchaKey).hmacHex(lotNumber);
 
-            VerifyIntelligentCaptchaRequest request = new VerifyIntelligentCaptchaRequest();
-            request.setCaptchaVerifyParam(captchaVerifyParam);
+        String url = "https://captcha.alicaptcha.com/validate";
 
-            RuntimeOptions runtimeOptions = new RuntimeOptions();
-            VerifyIntelligentCaptchaResponse response =
-                    client.verifyIntelligentCaptchaWithOptions(request, runtimeOptions);
-//            logger.info(new Gson().toJson(response.body));
-            return response.body.result.verifyResult;
-        } catch (TeaException error) {
-            logger.error(error.message);
-            return false;
-        } catch (Exception _error) {
-            logger.error(_error.getMessage());
-            return false;
-        }
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("lot_number", lotNumber);
+        formData.add("captcha_output", captchaOutput);
+        formData.add("pass_token", passToken);
+        formData.add("gen_time", genTime);
+        formData.add("captcha_id", captchaId);
+        formData.add("sign_token", signToken);
+
+        return webClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(formData))
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(responseBody -> {
+                    try {
+                        AliCaptchaResponse successResponse = objectMapper.readValue(responseBody, AliCaptchaResponse.class);
+                        return ResponseEntity.ok(successResponse);
+                    } catch (Exception e) {
+                        logger.error("Parsing failure", e);
+                        return ResponseEntity.ok("验证失败");
+                    }
+                })
+                .onErrorResume(e -> {
+                    logger.error("Request Error", e);
+                    return Mono.just(ResponseEntity.ok("请求异常"));
+                });
     }
 }

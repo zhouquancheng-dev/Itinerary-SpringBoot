@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.entity;
+package com.zqc.itineraryweb.entity.captcha;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Captcha {
+public class GtCaptcha {
     private String status;
     private String result;
     private String reason;
