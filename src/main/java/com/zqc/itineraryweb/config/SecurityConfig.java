@@ -29,9 +29,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests( authorize -> authorize
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/user/**").permitAll()
-                        .requestMatchers("/sms/**").permitAll()
                         .requestMatchers("/validate/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
+                        .requestMatchers("/neim/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(LogoutConfigurer::permitAll);
