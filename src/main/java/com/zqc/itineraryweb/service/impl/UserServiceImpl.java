@@ -122,10 +122,10 @@ public class UserServiceImpl implements UserService {
                 }
             }
         } catch (ExpiredJwtException e) {
-            logger.error("JWT令牌已过有效期");
+            logger.error("logout JWT令牌已过有效期");
             return Result.success();
         } catch (JwtException e) {
-            logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+            logger.error("logout 解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
         }
         return Result.error("退出登录失败");
     }
@@ -156,10 +156,10 @@ public class UserServiceImpl implements UserService {
                 return Result.error("自动登录失败，用户id错误");
             }
         } catch (ExpiredJwtException e) {
-            logger.error("JWT令牌已过有效期");
+            logger.error("autoLogin JWT令牌已过有效期");
             return Result.error("登录已过有效期，请重新登录");
         } catch (JwtException e) {
-            logger.error("解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
+            logger.error("autoLogin 解析JWT时发生错误: {}, 错误信息为: {}", e, e.getMessage());
         } catch (Exception e) {
             logger.error("发生错误: {}, 错误信息为: {}", e, e.getMessage());
         }

@@ -32,6 +32,8 @@ public class SecurityConfig {
                         .requestMatchers("/validate/**").permitAll()
                         .requestMatchers("/login/**").permitAll()
                         .requestMatchers("/neim/**").permitAll()
+                        .requestMatchers("/tim/**").permitAll()
+                        .requestMatchers("/oss/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(LogoutConfigurer::permitAll);

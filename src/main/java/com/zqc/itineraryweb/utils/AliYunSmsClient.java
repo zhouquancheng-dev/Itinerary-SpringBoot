@@ -33,16 +33,16 @@ public class AliYunSmsClient {
 
     private static final String endpoint = "dysmsapi.aliyuncs.com";
 
-    private static String secretKey;
+    private static String accessKey;
 
     private static String accessKeySecret;
 
-    @Value("${ali.sms.accessKey}")
-    public void setSecretKey(String secretKey) {
-        AliYunSmsClient.secretKey = secretKey;
+    @Value("${aliyun.sms.accessKey}")
+    public void setSecretKey(String accessKey) {
+        AliYunSmsClient.accessKey = accessKey;
     }
 
-    @Value("${ali.sms.accessKeySecret}")
+    @Value("${aliyun.sms.accessKeySecret}")
     public void setAccessKeySecret(String accessKeySecret) {
         AliYunSmsClient.accessKeySecret = accessKeySecret;
     }
@@ -55,7 +55,7 @@ public class AliYunSmsClient {
     private static Client createSmsClient() {
         if (client == null) {
             Config config = new Config()
-                    .setAccessKeyId(secretKey)
+                    .setAccessKeyId(accessKey)
                     .setAccessKeySecret(accessKeySecret)
                     .setEndpoint(endpoint);
             try {
@@ -77,7 +77,7 @@ public class AliYunSmsClient {
     public static SendSmsResponse sendSmsCode(String phoneNumber, int randomCode) {
         Client sendSmsCodeClient = createSmsClient();
         if (sendSmsCodeClient == null) {
-            logger.error("短信客户端未成功创建");
+            logger.error("sendSmsCode 短信客户端未成功创建");
             return null;
         }
 
@@ -96,16 +96,16 @@ public class AliYunSmsClient {
                 return sendSmsResponse;
             }
         } catch (ValidateException ve) {
-            logger.error("整体错误信息: {}", ve.getMessage());
+            logger.error("sendSmsCode 整体错误信息: {}", ve.getMessage());
         } catch (TeaUnretryableException tue) {
-            logger.error("错误信息: {}", tue.getMessage());
-            logger.error("请求记录: {}", tue.getLastRequest());
+            logger.error("sendSmsCode 错误信息: {}", tue.getMessage());
+            logger.error("sendSmsCode 请求记录: {}", tue.getLastRequest());
         } catch (TeaException te) {
-            logger.error("错误码: {}", te.getCode());
-            logger.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
-            logger.error("具体错误内容: {}", te.getData());
+            logger.error("sendSmsCode 错误码: {}", te.getCode());
+            logger.error("sendSmsCode 错误信息以及本次请求的RequestId: {}", te.getMessage());
+            logger.error("sendSmsCode 具体错误内容: {}", te.getData());
         } catch (Exception e) {
-            logger.error("Exception: {}", e.getMessage());
+            logger.error("sendSmsCode Exception: {}", e.getMessage());
         }
 
         // 如果发生异常，则返回null

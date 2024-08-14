@@ -25,7 +25,7 @@ public class CaptchaController {
 
     private static final Logger logger = LoggerFactory.getLogger(CaptchaController.class);
 
-    @Value("${ali.captcha.key}")
+    @Value("${aliyun.captcha.key}")
     private String aliCaptchaKey;
 
     @Value("${gt.loginAction.captchaKey}")

@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.controllers.im;
+package com.zqc.itineraryweb.controllers.nim_im;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -16,16 +16,16 @@ import java.security.MessageDigest;
 
 @RestController
 @RequestMapping(value = "/neim")
-public class IMController {
+public class NIMController {
 
-    private static final Logger logger = LoggerFactory.getLogger(IMController.class);
+    private static final Logger logger = LoggerFactory.getLogger(NIMController.class);
 
     @Value("${im.appSecret}")
     private String appSecret;
 
     private final ObjectMapper objectMapper;
 
-    public IMController(ObjectMapper objectMapper) {
+    public NIMController(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

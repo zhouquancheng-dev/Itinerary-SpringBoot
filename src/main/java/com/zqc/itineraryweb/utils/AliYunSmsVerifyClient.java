@@ -29,16 +29,16 @@ public class AliYunSmsVerifyClient {
 
     private static final String endpoint = "dypnsapi.aliyuncs.com";
 
-    private static String secretKey;
+    private static String accessKey;
 
     private static String accessKeySecret;
 
-    @Value("${ali.smsVerify.accessKey}")
-    public void setSecretKey(String secretKey) {
-        AliYunSmsVerifyClient.secretKey = secretKey;
+    @Value("${aliyun.smsVerify.accessKey}")
+    public void setSecretKey(String accessKey) {
+        AliYunSmsVerifyClient.accessKey = accessKey;
     }
 
-    @Value("${ali.smsVerify.accessKeySecret}")
+    @Value("${aliyun.smsVerify.accessKeySecret}")
     public void setAccessKeySecret(String accessKeySecret) {
         AliYunSmsVerifyClient.accessKeySecret = accessKeySecret;
     }
@@ -51,7 +51,7 @@ public class AliYunSmsVerifyClient {
     private static synchronized Client createClient() {
         if (client == null) {
             Config config = new Config()
-                    .setAccessKeyId(secretKey)
+                    .setAccessKeyId(accessKey)
                     .setAccessKeySecret(accessKeySecret)
                     .setEndpoint(endpoint);
             try {
@@ -80,7 +80,7 @@ public class AliYunSmsVerifyClient {
     ) {
         Client client = createClient();
         if (client == null) {
-            logger.error("短信客户端成功失败");
+            logger.error("sendSmsVerifyCode 短信客户端成功失败");
             return Result.error("验证码发送失败");
         }
 
@@ -104,11 +104,11 @@ public class AliYunSmsVerifyClient {
                 return Result.error("验证码发送失败: " + response.body.message);
             }
         } catch (TeaException te) {
-            logger.error("错误码: {}", te.getCode());
-            logger.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
-            logger.error("具体错误内容: {}", te.getData());
+            logger.error("sendSmsVerifyCode 错误码: {}", te.getCode());
+            logger.error("sendSmsVerifyCode 错误信息以及本次请求的RequestId: {}", te.getMessage());
+            logger.error("sendSmsVerifyCode 具体错误内容: {}", te.getData());
         } catch (Exception e) {
-            logger.error("Exception: {}", e.getMessage());
+            logger.error("sendSmsVerifyCode Exception: {}", e.getMessage());
         }
 
         return Result.error("验证码发送失败");
@@ -124,7 +124,7 @@ public class AliYunSmsVerifyClient {
     public static Result<CheckSmsVerifyCodeResponseBody> checkSmsVerifyCode(String phoneNumber, String verifyCode) {
         Client client = createClient();
         if (client == null) {
-            logger.error("短信客户端成功失败");
+            logger.error("checkSmsVerifyCode 短信客户端成功失败");
             return Result.error("验证码核验失败");
         }
 
@@ -143,11 +143,11 @@ public class AliYunSmsVerifyClient {
                 return Result.error("验证码核验失败: " + response.body.message);
             }
         } catch (TeaException te) {
-            logger.error("错误码: {}", te.getCode());
-            logger.error("错误信息以及本次请求的RequestId: {}", te.getMessage());
-            logger.error("具体错误内容: {}", te.getData());
+            logger.error("checkSmsVerifyCode 错误码: {}", te.getCode());
+            logger.error("checkSmsVerifyCode 错误信息以及本次请求的RequestId: {}", te.getMessage());
+            logger.error("checkSmsVerifyCode 具体错误内容: {}", te.getData());
         } catch (Exception e) {
-            logger.error("Exception: {}", e.getMessage());
+            logger.error("checkSmsVerifyCode Exception: {}", e.getMessage());
         }
 
         return Result.error("验证码核验失败");
