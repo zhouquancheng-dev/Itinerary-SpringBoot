@@ -15,16 +15,20 @@ public class AliCaptchaResponse {
     private String status;
     private String result;
     private String reason;
-    @JsonProperty("captcha_args") private CaptchaArgs captchaArgs;
+    @JsonProperty("captcha_args")
+    private CaptchaArgs captchaArgs;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CaptchaArgs {
-        @JsonProperty("used_type") private String usedType;
-        @JsonProperty("user_ip") private String userIp;
-        @JsonProperty("lot_number") private String lotNumber;
+        @JsonProperty("used_type")
+        private String usedType;
+        @JsonProperty("user_ip")
+        private String userIp;
+        @JsonProperty("lot_number")
+        private String lotNumber;
         private String scene;
         private String referer;
     }

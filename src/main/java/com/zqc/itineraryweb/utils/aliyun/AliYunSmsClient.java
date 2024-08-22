@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.utils;
+package com.zqc.itineraryweb.utils.aliyun;
 
 import com.aliyun.dysmsapi20170525.Client;
 import com.aliyun.dysmsapi20170525.models.QuerySendDetailsRequest;

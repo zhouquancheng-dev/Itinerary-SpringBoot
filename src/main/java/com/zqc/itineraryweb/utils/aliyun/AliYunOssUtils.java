@@ -1,4 +1,4 @@
-package com.zqc.itineraryweb.utils;
+package com.zqc.itineraryweb.utils.aliyun;
 
 import com.aliyun.oss.*;
 import com.aliyun.oss.common.auth.CredentialsProvider;
@@ -21,9 +21,9 @@ import java.net.URL;
 import java.util.Date;
 
 @Component
-public class AliYunOSSUtils {
+public class AliYunOssUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(AliYunOSSUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(AliYunOssUtils.class);
 
     private static final String DOMAIN_HOST = "oss.zyuxr.top";
 
@@ -39,12 +39,12 @@ public class AliYunOSSUtils {
 
     @Value("${aliyun.oss.accessKey}")
     public void setSecretKey(String accessKey) {
-        AliYunOSSUtils.accessKey = accessKey;
+        AliYunOssUtils.accessKey = accessKey;
     }
 
     @Value("${aliyun.oss.accessKeySecret}")
     public void setAccessKeySecret(String accessKeySecret) {
-        AliYunOSSUtils.accessKeySecret = accessKeySecret;
+        AliYunOssUtils.accessKeySecret = accessKeySecret;
     }
 
     /**
@@ -153,9 +153,8 @@ public class AliYunOSSUtils {
                     if (this.totalBytes != -1) {
                         int percent = (int) (this.bytesWritten * 100.0 / this.totalBytes);
                         logger.info("{} bytes have been written at this time, upload progress: {}% ({}, {})", bytes, percent, this.bytesWritten, this.totalBytes);
-                    } else {
-//                        logger.info("{} bytes have been written at this time, upload ratio: ({})", bytes, this.bytesWritten);
                     }
+//                    logger.info("{} bytes have been written at this time, upload ratio: ({})", bytes, this.bytesWritten);
                     break;
                 case TRANSFER_COMPLETED_EVENT:
                     this.succeed = true;

@@ -12,15 +12,19 @@ public class GtCaptcha {
     private String status;
     private String result;
     private String reason;
-    @SerializedName("captcha_args") private CaptchaArgs captchaArgs;
+    @SerializedName("captcha_args")
+    private CaptchaArgs captchaArgs;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CaptchaArgs {
-        @SerializedName("used_type") private String usedType;
-        @SerializedName("user_ip") private String userIp;
-        @SerializedName("lot_number") private String lotNumber;
+        @SerializedName("used_type")
+        private String usedType;
+        @SerializedName("user_ip")
+        private String userIp;
+        @SerializedName("lot_number")
+        private String lotNumber;
         private String scene;
         private String referer;
     }

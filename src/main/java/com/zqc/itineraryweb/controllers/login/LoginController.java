@@ -5,7 +5,7 @@ import com.aliyun.dypnsapi20170525.models.SendSmsVerifyCodeResponseBody;
 import com.zqc.itineraryweb.entity.Result;
 import com.zqc.itineraryweb.entity.login.LoginTokenVerifyRequest;
 import com.zqc.itineraryweb.service.LoginService;
-import com.zqc.itineraryweb.utils.AliYunSmsVerifyClient;
+import com.zqc.itineraryweb.utils.aliyun.AliYunSmsVerifyClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;

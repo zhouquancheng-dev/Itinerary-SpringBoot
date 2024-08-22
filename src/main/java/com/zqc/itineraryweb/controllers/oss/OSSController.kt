@@ -1,7 +1,10 @@
 package com.zqc.itineraryweb.controllers.oss
 
 import com.zqc.itineraryweb.entity.Result
-import com.zqc.itineraryweb.utils.AliYunOSSUtils
+import com.zqc.itineraryweb.entity.oss.StsResponse
+import com.zqc.itineraryweb.utils.aliyun.AliYunOssStsUtils
+import com.zqc.itineraryweb.utils.aliyun.AliYunOssUtils
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -12,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping(value = ["/oss"])
 class OSSController {
 
+    /**
+     * 上传文件
+     */
     @PostMapping(value = ["/upload"])
     fun upload(
         @RequestParam file: MultipartFile,
@@ -23,7 +29,15 @@ class OSSController {
         if (file.size > maxSize) {
             return Result.error("上传文件大小不能超过5GB")
         }
-        return AliYunOSSUtils.upload(file, bucketDirName, fileName)
+        return AliYunOssUtils.upload(file, bucketDirName, fileName)
+    }
+
+    /**
+     * 获取OSS对象存储 STS临时令牌
+     */
+    @GetMapping(value = ["/stsToken"])
+    fun getStsToken(): Result<StsResponse> {
+        return AliYunOssStsUtils.getStsToken()
     }
 
 }
