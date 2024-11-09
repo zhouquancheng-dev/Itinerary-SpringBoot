@@ -66,7 +66,7 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.4.0</version>
+            <version>9.1.0</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -75,7 +75,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.32</version>
+            <version>1.18.34</version>
         </dependency>
 
         <!-- JWT令牌相关依赖-->
@@ -83,18 +83,18 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.12.5</version>
+            <version>0.12.6</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.12.5</version>
+            <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-gson</artifactId>
-            <version>0.12.5</version>
+            <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -119,7 +119,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.17.0</version>
+            <version>1.17.1</version>
         </dependency>
 
         <!-- 阿里云短信服务 -->
@@ -127,14 +127,15 @@
         <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>dysmsapi20170525</artifactId>
-            <version>3.0.0</version>
+            <version>3.1.0</version>
         </dependency>
 
         <!-- 云通信号码认证服务 -->
-         <dependency>
+        <!-- https://mvnrepository.com/artifact/com.aliyun/dypnsapi20170525 -->
+        <dependency>
             <groupId>com.aliyun</groupId>
             <artifactId>dypnsapi20170525</artifactId>
-            <version>1.2.1</version>
+            <version>1.2.3</version>
         </dependency>
 
         <!-- 阿里云OSS -->
